@@ -1,20 +1,10 @@
-/* --------------------------------------------------------------------------
- * SimpleOpenNI User3d Test
- * --------------------------------------------------------------------------
- * Processing Wrapper for the OpenNI/Kinect 2 library
- * http://code.google.com/p/simple-openni
- * --------------------------------------------------------------------------
- * prog:  Max Rheiner / Interaction Design / Zhdk / http://iad.zhdk.ch/
- * date:  12/12/2012 (m/d/y)
- * ----------------------------------------------------------------------------
- */
 
 import SimpleOpenNI.*;
 
 
 //for cube head
 
-
+//ArrayList<PVector> HeadPosition
 PVector head_position = new PVector();
 PVector Shoulder_left_jointPos = new PVector();
 PVector Shoulder_right_jointPos = new PVector();
@@ -73,7 +63,6 @@ void setup()
 
   // enable ir generation
   context.enableRGB();
-
   stroke(255, 255, 255);
   smooth();  
   perspective(radians(45), 
@@ -113,6 +102,32 @@ void draw()
     if (context.isTrackingSkeleton(userList[i]))
       drawSkeleton(userList[i]);
 
+
+    float confident;
+    confident = context.getJointPositionSkeleton(userList[i], 
+    SimpleOpenNI.SKEL_HEAD, head_position);
+    confident = context.getJointPositionSkeleton(userList[i], 
+    SimpleOpenNI.SKEL_LEFT_SHOULDER, Shoulder_left_jointPos);
+    confident = context.getJointPositionSkeleton(userList[i], 
+    SimpleOpenNI.SKEL_RIGHT_SHOULDER, Shoulder_right_jointPos);
+    confident = context.getJointPositionSkeleton(userList[i], 
+    SimpleOpenNI.SKEL_NECK, neck_jointPos);    
+
+    pushMatrix();
+    translate(head_position.x, head_position.y, head_position.z);
+    rotateY(((PI/2) * (Shoulder_left_jointPos.z - Shoulder_right_jointPos.z))/200);
+    fill(0, 235);
+    stroke(200);
+    strokeWeight(1);
+    if (userList.length != 0 && head_position.z != 0) {
+      box(350);
+      strokeWeight(1);
+    }
+
+    popMatrix();     
+
+
+
     // draw the center of mass
     //    if (context.getCoM(userList[i], com))
     //    {
@@ -140,36 +155,35 @@ void draw()
   //draw rgb image
   pushMatrix();
 
-  //adjust RGB image position
-  if (keyPressed && key == 'w') {
-    camera_adjust_x = camera_adjust_x - 1 ;
-    println("camera_adjust_x = " + camera_adjust_x);
-  }
-  if (keyPressed &&key == 's') {
-    camera_adjust_x = camera_adjust_x + 1 ;
-    println("camera_adjust_x = " + camera_adjust_x);
-  }
-  if (keyPressed &&key == 'a') {
-    camera_adjust_y = camera_adjust_y - 1 ;
-    println("camera_adjust_y = " + camera_adjust_y);
-  }
-  if (keyPressed &&key == 'd') {
-    camera_adjust_y = camera_adjust_y + 1 ;
-    println("camera_adjust_y = " + camera_adjust_y);
-  }
-  if (keyPressed &&key == 'q') 
-  {
-    camera_adjust_scale = camera_adjust_scale + 0.1 ;
-    println("camera_adjust_scale = " + camera_adjust_scale);
-  }
-  if (keyPressed &&key == 'e') 
-  {
-    camera_adjust_scale = camera_adjust_scale - 0.1 ;
-    println("camera_adjust_scale = " + camera_adjust_scale);
-  }
+  //  //adjust RGB image position
+  //  if (keyPressed && key == 'w') {
+  //    camera_adjust_x = camera_adjust_x - 1 ;
+  //    println("camera_adjust_x = " + camera_adjust_x);
+  //  }
+  //  if (keyPressed &&key == 's') {
+  //    camera_adjust_x = camera_adjust_x + 1 ;
+  //    println("camera_adjust_x = " + camera_adjust_x);
+  //  }
+  //  if (keyPressed &&key == 'a') {
+  //    camera_adjust_y = camera_adjust_y - 1 ;
+  //    println("camera_adjust_y = " + camera_adjust_y);
+  //  }
+  //  if (keyPressed &&key == 'd') {
+  //    camera_adjust_y = camera_adjust_y + 1 ;
+  //    println("camera_adjust_y = " + camera_adjust_y);
+  //  }
+  //  if (keyPressed &&key == 'q') 
+  //  {
+  //    camera_adjust_scale = camera_adjust_scale + 0.1 ;
+  //    println("camera_adjust_scale = " + camera_adjust_scale);
+  //  }
+  //  if (keyPressed &&key == 'e') 
+  //  {
+  //    camera_adjust_scale = camera_adjust_scale - 0.1 ;
+  //    println("camera_adjust_scale = " + camera_adjust_scale);
+  //  }
 
   translate(0, 0, 1650); 
-
   translate(camera_adjust_x, camera_adjust_y, 0);
   rotateX(-rotX);
   rotateY(-rotY);
@@ -178,18 +192,18 @@ void draw()
   popMatrix();
 
   //draw the cubes!
-  pushMatrix();
-  translate(head_position.x, head_position.y, head_position.z);
-  rotateY(((PI/2) * (Shoulder_left_jointPos.z - Shoulder_right_jointPos.z))/200);
-  fill(0,235);
-  stroke(200);
-  strokeWeight(1);
-  if (userList.length != 0) {
-    box(350);
-    strokeWeight(1);
-  }
-
-  popMatrix();
+  //  pushMatrix();
+  //  translate(head_position.x, head_position.y, head_position.z);
+  //  rotateY(((PI/2) * (Shoulder_left_jointPos.z - Shoulder_right_jointPos.z))/200);
+  //  fill(0, 235);
+  //  stroke(200);
+  //  strokeWeight(1);
+  //  if (userList.length != 0) {
+  //    box(350);
+  //    strokeWeight(1);
+  //  }
+  //
+  //  popMatrix();
 }
 
 
@@ -209,9 +223,6 @@ void drawSkeleton(int userId)
 
   // to get the 3d joint data
   drawLimb(userId, SimpleOpenNI.SKEL_HEAD, SimpleOpenNI.SKEL_NECK);
-
-
-
   drawLimb(userId, SimpleOpenNI.SKEL_NECK, SimpleOpenNI.SKEL_LEFT_SHOULDER);
   drawLimb(userId, SimpleOpenNI.SKEL_LEFT_SHOULDER, SimpleOpenNI.SKEL_LEFT_ELBOW);
   drawLimb(userId, SimpleOpenNI.SKEL_LEFT_ELBOW, SimpleOpenNI.SKEL_LEFT_HAND);
@@ -230,9 +241,16 @@ void drawSkeleton(int userId)
   drawLimb(userId, SimpleOpenNI.SKEL_TORSO, SimpleOpenNI.SKEL_RIGHT_HIP);
   drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_HIP, SimpleOpenNI.SKEL_RIGHT_KNEE);
   drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_KNEE, SimpleOpenNI.SKEL_RIGHT_FOOT);  
+  //drawHeadCube(userId, head_position, Shoulder_left_jointPos, Shoulder_right_jointPos, neck_jointPos);
+
 
   // draw body direction
   getBodyDirection(userId, bodyCenter, bodyDir);
+
+  println("this is dir - x: " + bodyDir.x + "this is dir -y:" + bodyDir.y + "this is dir-z" + bodyDir.z);
+
+
+
 
   bodyDir.mult(200);  // 200mm length
   bodyDir.add(bodyCenter);
@@ -254,7 +272,6 @@ void drawLimb(int userId, int jointType1, int jointType2)
 
   // draw the joint position
   confidence = context.getJointPositionSkeleton(userId, jointType1, jointPos1);
-
   confidence = context.getJointPositionSkeleton(userId, jointType2, jointPos2);
 
   //pass the positions to our cubes' PVectors
@@ -278,8 +295,8 @@ void drawLimb(int userId, int jointType1, int jointType2)
     //println(head_position.x + "," +head_position.y + "," +head_position.z);
   }
 
-stroke(0,0);
- // stroke(255, 0, 0, confidence * 200 + 55);
+  stroke(0, 0);
+  // stroke(255, 0, 0, confidence * 200 + 55);
   line(jointPos1.x, jointPos1.y, jointPos1.z, 
   jointPos2.x, jointPos2.y, jointPos2.z);
 
@@ -305,23 +322,23 @@ void drawJointOrientation(int userId, int jointType, PVector pos, float length)
 
   // coordsys lines are 100mm long
   // x - r
-  
 
- stroke(255, 0, 0, confidence * 200 + 55);
-  stroke(0,20);
+
+  stroke(255, 0, 0, confidence * 200 + 55);
+
   line(0, 0, 0, 
   length, 0, 0);
   // y - g
-  
- 
+
+
   stroke(0, 255, 0, confidence * 200 + 55);
-    stroke(0,20);
+
   line(0, 0, 0, 
   0, length, 0);
   // z - b    
-  
+
   stroke(0, 0, 255, confidence * 200 + 55);
-   stroke(0,20);
+
   line(0, 0, 0, 
   0, 0, length);
   popMatrix();
@@ -352,46 +369,6 @@ void onVisibleUser(SimpleOpenNI curContext, int userId)
 }
 
 
-// -----------------------------------------------------------------
-// Keyboard events
-
-void keyPressed()
-{
-  switch(key)
-  {
-  case ' ':
-    context.setMirror(!context.mirror());
-    break;
-  }
-
-  switch(keyCode)
-  {
-  case LEFT:
-    rotY += 0.1f;
-    break;
-  case RIGHT:
-    // zoom out
-    rotY -= 0.1f;
-    break;
-  case UP:
-    if (keyEvent.isShiftDown())
-      zoomF += 0.01f;
-    else
-      rotX += 0.1f;
-    break;
-  case DOWN:
-    if (keyEvent.isShiftDown())
-    {
-      zoomF -= 0.01f;
-      if (zoomF < 0.01)
-        zoomF = 0.01;
-    }
-    else
-      rotX -= 0.1f;
-    break;
-  }
-}
-
 void getBodyDirection(int userId, PVector centerPoint, PVector dir)
 {
   PVector jointL = new PVector();
@@ -407,11 +384,6 @@ void getBodyDirection(int userId, PVector centerPoint, PVector dir)
   // take the neck as the center point
   confidence = context.getJointPositionSkeleton(userId, SimpleOpenNI.SKEL_NECK, centerPoint);
 
-  /*  // manually calc the centerPoint
-   PVector shoulderDist = PVector.sub(jointL,jointR);
-   centerPoint.set(PVector.mult(shoulderDist,.5));
-   centerPoint.add(jointR);
-   */
 
   PVector up = PVector.sub(jointH, centerPoint);
   PVector left = PVector.sub(jointR, centerPoint);
@@ -419,4 +391,9 @@ void getBodyDirection(int userId, PVector centerPoint, PVector dir)
   dir.set(up.cross(left));
   dir.normalize();
 }
+
+
+
+void draw_cube () {
+}  
 
