@@ -15,11 +15,15 @@ float[] afterSmoothHeadRots = new float[100];
 float posSmoothRate = 0.7;
 float rotSmoothRate = 0.1;
 
+
+PGraphics render;
+
 //smooth
 
 void setup()
 {
-  size(640, 480, P3D);
+  //size(fullScreen);
+  fullScreen(P3D);
   context = new SimpleOpenNI(this);
   if (context.isInit() == false)
   {
@@ -39,14 +43,18 @@ void setup()
   for (int i=0; i<afterSmoothHeadPos2Ds.length; i++) {
     afterSmoothHeadPos2Ds[i] = new PVector();
   }
+
+
+  render = createGraphics(640, 480, P3D);
 }
 
 void draw()
 {
   // update the cam
   context.update();
-  background(context.rgbImage());
-  filter(GRAY);
+  render.beginDraw();
+  render.background(context.rgbImage());
+  render.filter(GRAY);
 
   // draw the skeleton if it's available
   int[] userList = context.getUsers();
@@ -62,17 +70,23 @@ void draw()
     if (context.getCoM(userList[i], com))
     {
       context.convertRealWorldToProjective(com, com2d);
-      stroke(255);
-      strokeWeight(1);
-      beginShape(LINES);
-      vertex(com2d.x, com2d.y - 5);
-      vertex(com2d.x, com2d.y + 5);
+      render.stroke(255);
+      render.strokeWeight(1);
+      render.beginShape(LINES);
+      render.vertex(com2d.x, com2d.y - 5);
+      render.vertex(com2d.x, com2d.y + 5);
 
-      vertex(com2d.x - 5, com2d.y);
-      vertex(com2d.x + 5, com2d.y);
-      endShape();
+      render.vertex(com2d.x - 5, com2d.y);
+      render.vertex(com2d.x + 5, com2d.y);
+      render.endShape();
     }
   }
+  render.endDraw();
+  
+  
+  imageMode(CENTER);
+  
+  image(render,width/2, height/2, (render.width*height)/render.height, height);
 }
 
 // draw the skeleton with the selected joints
@@ -99,17 +113,17 @@ void drawSkeleton(int userId)
   afterSmoothHeadPos2Ds[userId] = PVector.add(afterSmoothHeadPos2Ds[userId], 
     PVector.mult(PVector.sub(headPos2D, afterSmoothHeadPos2Ds[userId]), posSmoothRate));
 
-  pushMatrix();
-  stroke(255, 20);
-  fill(0, 230);
-  translate(afterSmoothHeadPos2Ds[userId].x, afterSmoothHeadPos2Ds[userId].y + 15, 0);
+  render.pushMatrix();
+  render.stroke(255, 20);
+  render.fill(0, 230);
+  render.translate(afterSmoothHeadPos2Ds[userId].x, afterSmoothHeadPos2Ds[userId].y + 15, 0);
   float headRot = ((PI/2) * (leftShouldPos.z - rightShouldPos.z))/200;
   afterSmoothHeadRots[userId] += (headRot - afterSmoothHeadRots[userId]) * rotSmoothRate;
-  rotateY(afterSmoothHeadRots[userId]);
+  render.rotateY(afterSmoothHeadRots[userId]);
 
 
-  box(130 * map( afterSmoothHeadPos2Ds[userId].z, 900, 1800, 1.5, 0.7));
-  popMatrix();
+  render.box(130 * map( afterSmoothHeadPos2Ds[userId].z, 900, 1800, 1.5, 0.7));
+  render.popMatrix();
 }
 
 // -----------------------------------------------------------------
