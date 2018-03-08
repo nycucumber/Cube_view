@@ -1,19 +1,6 @@
 import SimpleOpenNI.*;
 
-//for cube head
-PVector head_position = new PVector();
-PVector Shoulder_left_jointPos = new PVector();
-PVector Shoulder_right_jointPos = new PVector();
-PVector neck_jointPos = new PVector();
-boolean handsTrackFlag = false; 
-PVector handVec = new PVector();
-//end for cube head
-
-SimpleOpenNI context;
-
-PVector      bodyCenter = new PVector();
-PVector      bodyDir = new PVector();
-
+SimpleOpenNI  context;
 color[]       userClr = new color[] { 
   color(255, 0, 0), 
   color(0, 255, 0), 
@@ -22,17 +9,13 @@ color[]       userClr = new color[] {
   color(255, 0, 255), 
   color(0, 255, 255)
 };
+PVector com = new PVector();                                   
+PVector com2d = new PVector();                                   
 
 void setup()
 {
   size(640, 480, P3D);
-  perspective(radians(45), float(width)/float(height), 10, 150000);
-
-
   context = new SimpleOpenNI(this);
-
-  println("context init successfully");
-
   if (context.isInit() == false)
   {
     println("Can't init SimpleOpenNI, maybe the camera is not connected!"); 
@@ -40,238 +23,139 @@ void setup()
     return;
   }
 
-  // disable mirror
-  context.setMirror(false);
-  println("set mirror successfully");
+  // enable depthMap generation 
+  context.enableDepth();
+  context.enableRGB();
+
   // enable skeleton generation for all joints
   context.enableUser();
-  println("enable user successfully");
-  // enable ir generation
-  context.enableRGB();
-  println("enable rgb successfully");
+  smooth();
 }
 
 void draw()
 {
+  // update the cam
+  context.update();
 
-  try {
+  // draw depthImageMap
+  //image(context.depthImage(),0,0);
+  // image(context.userImage(),0,0);
+  //image(context.rgbImage(), 0, 0);
 
-    context.update();
-    PVector myPositionScreenCoords  = new PVector(); //storage device
-    //convert the weird kinect coordinates to screen coordinates.
-    context.convertRealWorldToProjective(handVec, myPositionScreenCoords);
-    background(0, 0, 0);
+  background(context.rgbImage());
+  filter(GRAY);
 
-    pushMatrix();
-    translate(-600, -500, -1000);
-    scale(3);
-    image(context.rgbImage(), 0, 0);
-    filter(GRAY);
-    popMatrix();
-
-    // set the scene pos
-    translate(width/2, height/2, 0);
-    rotateX(180);
-    rotateY(0);
-    scale(0.5);
-
-
-    translate(0, 0, -1000);  // set the rotation center of the scene 1000 infront of the camera
-
-    // draw the pointcloud
-
-
-    // draw the skeleton if it's available
-    int[] userList = context.getUsers();
-    for (int i=0; i<userList.length; i++)
+  // draw the skeleton if it's available
+  int[] userList = context.getUsers();
+  for (int i=0; i<userList.length; i++)
+  {
+    if (context.isTrackingSkeleton(userList[i]))
     {
-      if (context.isTrackingSkeleton(userList[i]))
-        drawSkeleton(userList[i]);
+      stroke(userClr[ (userList[i] - 1) % userClr.length ] );
+      drawSkeleton(userList[i]);
+    }      
 
-
-      float confident;
-      confident = context.getJointPositionSkeleton(userList[i], 
-        SimpleOpenNI.SKEL_HEAD, head_position);
-      confident = context.getJointPositionSkeleton(userList[i], 
-        SimpleOpenNI.SKEL_LEFT_SHOULDER, Shoulder_left_jointPos);
-      confident = context.getJointPositionSkeleton(userList[i], 
-        SimpleOpenNI.SKEL_RIGHT_SHOULDER, Shoulder_right_jointPos);
-      confident = context.getJointPositionSkeleton(userList[i], 
-        SimpleOpenNI.SKEL_NECK, neck_jointPos);    
-
-      pushMatrix();
-      translate(head_position.x, head_position.y, head_position.z);
-      rotateY(((PI/2) * (Shoulder_left_jointPos.z - Shoulder_right_jointPos.z))/200);
-      fill(0, 235);
-      stroke(200);
+    // draw the center of mass
+    if (context.getCoM(userList[i], com))
+    {
+      context.convertRealWorldToProjective(com, com2d);
+      stroke(100, 255, 0);
       strokeWeight(1);
-      stroke(0, 0);
-      if (userList.length != 0 && head_position.z != 0) {
-        box(350);
-        strokeWeight(1);
-      }
+      beginShape(LINES);
+      vertex(com2d.x, com2d.y - 5);
+      vertex(com2d.x, com2d.y + 5);
 
-      popMatrix();
+      vertex(com2d.x - 5, com2d.y);
+      vertex(com2d.x + 5, com2d.y);
+      endShape();
+
+      fill(0, 255, 100);
+      text(Integer.toString(userList[i]), com2d.x, com2d.y);
     }
   }
-  catch(Exception e) {
-    println(e);
-  }
 }
-
 
 // draw the skeleton with the selected joints
 void drawSkeleton(int userId)
 {
-  strokeWeight(3);
-
   // to get the 3d joint data
-  drawLimb(userId, SimpleOpenNI.SKEL_HEAD, SimpleOpenNI.SKEL_NECK);
-  drawLimb(userId, SimpleOpenNI.SKEL_NECK, SimpleOpenNI.SKEL_LEFT_SHOULDER);
-  drawLimb(userId, SimpleOpenNI.SKEL_LEFT_SHOULDER, SimpleOpenNI.SKEL_LEFT_ELBOW);
-  drawLimb(userId, SimpleOpenNI.SKEL_LEFT_ELBOW, SimpleOpenNI.SKEL_LEFT_HAND);
+  /*
+  PVector jointPos = new PVector();
+   context.getJointPositionSkeleton(userId,SimpleOpenNI.SKEL_NECK,jointPos);
+   println(jointPos);
+   */
 
-  drawLimb(userId, SimpleOpenNI.SKEL_NECK, SimpleOpenNI.SKEL_RIGHT_SHOULDER);
-  drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_SHOULDER, SimpleOpenNI.SKEL_RIGHT_ELBOW);
-  drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_ELBOW, SimpleOpenNI.SKEL_RIGHT_HAND);
-
-  drawLimb(userId, SimpleOpenNI.SKEL_LEFT_SHOULDER, SimpleOpenNI.SKEL_TORSO);
-  drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_SHOULDER, SimpleOpenNI.SKEL_TORSO);
-
-  drawLimb(userId, SimpleOpenNI.SKEL_TORSO, SimpleOpenNI.SKEL_LEFT_HIP);
-  drawLimb(userId, SimpleOpenNI.SKEL_LEFT_HIP, SimpleOpenNI.SKEL_LEFT_KNEE);
-  drawLimb(userId, SimpleOpenNI.SKEL_LEFT_KNEE, SimpleOpenNI.SKEL_LEFT_FOOT);
-
-  drawLimb(userId, SimpleOpenNI.SKEL_TORSO, SimpleOpenNI.SKEL_RIGHT_HIP);
-  drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_HIP, SimpleOpenNI.SKEL_RIGHT_KNEE);
-  drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_KNEE, SimpleOpenNI.SKEL_RIGHT_FOOT);  
+  PVector jointPos = new PVector();
+  PVector jointPos2D = new PVector();
 
 
+  PVector leftShouldPos = new PVector();
+  PVector rightShouldPos = new PVector();
+  PVector neckPos = new PVector();
 
-  // draw body direction
-  getBodyDirection(userId, bodyCenter, bodyDir);
-  bodyDir.mult(200);  // 200mm length
-  bodyDir.add(bodyCenter);
-  //
-  //  stroke(255, 200, 200);
-  // 
-  //  line(bodyCenter.x, bodyCenter.y, bodyCenter.z, 
-  //  bodyDir.x, bodyDir.y, bodyDir.z);
-
-  strokeWeight(1);
-}
-
-void drawLimb(int userId, int jointType1, int jointType2)
-{
-  PVector jointPos1 = new PVector();
-  PVector jointPos2 = new PVector();
-  float  confidence;
+  context.getJointPositionSkeleton(userId, SimpleOpenNI.SKEL_HEAD, jointPos);
 
 
-
-  // draw the joint position
-  confidence = context.getJointPositionSkeleton(userId, jointType1, jointPos1);
-  confidence = context.getJointPositionSkeleton(userId, jointType2, jointPos2);
-
-  //pass the positions to our cubes' PVectors
-
-
-  if (jointType1 == SimpleOpenNI.SKEL_LEFT_SHOULDER) {
-    Shoulder_left_jointPos = jointPos1;
-  }
-
-  if (jointType1 == SimpleOpenNI.SKEL_RIGHT_SHOULDER) {
-    Shoulder_right_jointPos = jointPos1;
-  }
-
-  if (jointType1 == SimpleOpenNI.SKEL_HEAD) {
-    head_position = jointPos1;
-  }
+  context.getJointPositionSkeleton(userId, 
+    SimpleOpenNI.SKEL_LEFT_SHOULDER, leftShouldPos);
+  context.getJointPositionSkeleton(userId, 
+    SimpleOpenNI.SKEL_RIGHT_SHOULDER, rightShouldPos);
+  context.getJointPositionSkeleton(userId, 
+    SimpleOpenNI.SKEL_NECK, neckPos);   
 
 
-  stroke(255, 0, 0, confidence * 200 + 55);
-  stroke(0, 0);
-  line(jointPos1.x, jointPos1.y, jointPos1.z, 
-    jointPos2.x, jointPos2.y, jointPos2.z);
-
-  drawJointOrientation(userId, jointType1, jointPos1, 50);
-}
-
-
-
-void drawJointOrientation(int userId, int jointType, PVector pos, float length)
-{
-  // draw the joint orientation  
-  PMatrix3D  orientation = new PMatrix3D();
-  float confidence = context.getJointOrientationSkeleton(userId, jointType, orientation);
-  if (confidence < 0.001f) 
-    // nothing to draw, orientation data is useless
-    return;
+  context.convertRealWorldToProjective(jointPos, jointPos2D);
 
   pushMatrix();
-  translate(pos.x, pos.y, pos.z);
+  println(jointPos2D.z);
+  stroke(255, 40);
+  fill(0, 230);
+  translate(jointPos2D.x, jointPos2D.y + 15, 0);
+  rotateY(((PI/2) * (leftShouldPos.z - rightShouldPos.z))/200);
+  //ellipse(jointPos2D.x, jointPos2D.y, 100, 100);
 
-  // set the local coordsys
-  applyMatrix(orientation);
-
-  // coordsys lines are 100mm long
-  // x - r
-
-
-  stroke(255, 0, 0, confidence * 200 + 55);
-  stroke(0, 0);
-  line(0, 0, 0, 
-    length, 0, 0);
-  // y - g
-
-
-  stroke(0, 255, 0, confidence * 200 + 55);
-  stroke(0, 0);
-  line(0, 0, 0, 
-    0, length, 0);
-  // z - b    
-
-  stroke(0, 0, 255, confidence * 200 + 55);
-  stroke(0, 0);
-  line(0, 0, 0, 
-    0, 0, length);
+  box(130 * map(jointPos2D.z, 900, 1800, 1.5, 0.7));
   popMatrix();
+
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_HEAD, SimpleOpenNI.SKEL_NECK);
+
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_NECK, SimpleOpenNI.SKEL_LEFT_SHOULDER);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_SHOULDER, SimpleOpenNI.SKEL_LEFT_ELBOW);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_ELBOW, SimpleOpenNI.SKEL_LEFT_HAND);
+
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_NECK, SimpleOpenNI.SKEL_RIGHT_SHOULDER);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_SHOULDER, SimpleOpenNI.SKEL_RIGHT_ELBOW);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_ELBOW, SimpleOpenNI.SKEL_RIGHT_HAND);
+
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_SHOULDER, SimpleOpenNI.SKEL_TORSO);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_SHOULDER, SimpleOpenNI.SKEL_TORSO);
+
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_TORSO, SimpleOpenNI.SKEL_LEFT_HIP);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_HIP, SimpleOpenNI.SKEL_LEFT_KNEE);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_KNEE, SimpleOpenNI.SKEL_LEFT_FOOT);
+
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_TORSO, SimpleOpenNI.SKEL_RIGHT_HIP);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_HIP, SimpleOpenNI.SKEL_RIGHT_KNEE);
+  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_KNEE, SimpleOpenNI.SKEL_RIGHT_FOOT);
 }
 
 // -----------------------------------------------------------------
-// SimpleOpenNI user events
-
-
-
+// SimpleOpenNI events
 
 void onNewUser(SimpleOpenNI curContext, int userId)
 {
   println("onNewUser - userId: " + userId);
   println("\tstart tracking skeleton");
-  context.startTrackingSkeleton(userId);
+
+  curContext.startTrackingSkeleton(userId);
 }
 
-
-
-void getBodyDirection(int userId, PVector centerPoint, PVector dir)
+void onLostUser(SimpleOpenNI curContext, int userId)
 {
-  PVector jointL = new PVector();
-  PVector jointH = new PVector();
-  PVector jointR = new PVector();
-  float  confidence;
+  println("onLostUser - userId: " + userId);
+}
 
-  // draw the joint position
-  confidence = context.getJointPositionSkeleton(userId, SimpleOpenNI.SKEL_LEFT_SHOULDER, jointL);
-  confidence = context.getJointPositionSkeleton(userId, SimpleOpenNI.SKEL_HEAD, jointH);
-  confidence = context.getJointPositionSkeleton(userId, SimpleOpenNI.SKEL_RIGHT_SHOULDER, jointR);
-
-  // take the neck as the center point
-  confidence = context.getJointPositionSkeleton(userId, SimpleOpenNI.SKEL_NECK, centerPoint);
-
-
-  PVector up = PVector.sub(jointH, centerPoint);
-  PVector left = PVector.sub(jointR, centerPoint);
-
-  dir.set(up.cross(left));
-  dir.normalize();
+void onVisibleUser(SimpleOpenNI curContext, int userId)
+{
+  //println("onVisibleUser - userId: " + userId);
 }
