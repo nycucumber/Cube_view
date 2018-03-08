@@ -1,16 +1,21 @@
 import SimpleOpenNI.*;
 
 SimpleOpenNI  context;
-//color[]       userClr = new color[] { 
-//  color(255, 0, 0), 
-//  color(0, 255, 0), 
-//  color(0, 0, 255), 
-//  color(255, 255, 0), 
-//  color(255, 0, 255), 
-//  color(0, 255, 255)
-//};
+
+//body center
 PVector com = new PVector();                                   
-PVector com2d = new PVector();                                   
+PVector com2d = new PVector();    
+
+
+PVector[] afterSmoothHeadPos2Ds = new PVector[100];
+float[] afterSmoothHeadRots = new float[100];
+
+
+
+float posSmoothRate = 0.7;
+float rotSmoothRate = 0.1;
+
+//smooth
 
 void setup()
 {
@@ -30,18 +35,16 @@ void setup()
   // enable skeleton generation for all joints
   context.enableUser();
   smooth();
+
+  for (int i=0; i<afterSmoothHeadPos2Ds.length; i++) {
+    afterSmoothHeadPos2Ds[i] = new PVector();
+  }
 }
 
 void draw()
 {
   // update the cam
   context.update();
-
-  // draw depthImageMap
-  //image(context.depthImage(),0,0);
-  // image(context.userImage(),0,0);
-  //image(context.rgbImage(), 0, 0);
-
   background(context.rgbImage());
   filter(GRAY);
 
@@ -75,12 +78,6 @@ void draw()
 // draw the skeleton with the selected joints
 void drawSkeleton(int userId)
 {
-  // to get the 3d joint data
-  /*
-  PVector jointPos = new PVector();
-   context.getJointPositionSkeleton(userId,SimpleOpenNI.SKEL_NECK,jointPos);
-   println(jointPos);
-   */
 
   PVector headPos = new PVector();
   PVector headPos2D = new PVector();
@@ -99,16 +96,19 @@ void drawSkeleton(int userId)
 
   context.convertRealWorldToProjective(headPos, headPos2D);
 
+  afterSmoothHeadPos2Ds[userId] = PVector.add(afterSmoothHeadPos2Ds[userId], 
+    PVector.mult(PVector.sub(headPos2D, afterSmoothHeadPos2Ds[userId]), posSmoothRate));
 
   pushMatrix();
-
-  stroke(255, 40);
+  stroke(255, 20);
   fill(0, 230);
-  translate(headPos2D.x, headPos2D.y + 15, 0);
-  rotateY(((PI/2) * (leftShouldPos.z - rightShouldPos.z))/200);
+  translate(afterSmoothHeadPos2Ds[userId].x, afterSmoothHeadPos2Ds[userId].y + 15, 0);
+  float headRot = ((PI/2) * (leftShouldPos.z - rightShouldPos.z))/200;
+  afterSmoothHeadRots[userId] += (headRot - afterSmoothHeadRots[userId]) * rotSmoothRate;
+  rotateY(afterSmoothHeadRots[userId]);
 
 
-  box(130 * map(headPos2D.z, 900, 1800, 1.5, 0.7));
+  box(130 * map( afterSmoothHeadPos2Ds[userId].z, 900, 1800, 1.5, 0.7));
   popMatrix();
 }
 
