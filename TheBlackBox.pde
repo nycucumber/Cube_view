@@ -12,7 +12,7 @@ float[] afterSmoothHeadRots = new float[100];
 float posSmoothRate = 0.6;
 float rotSmoothRate = 0.3;
 
-float boxSize = 130;
+float boxSize = 120;
 PVector finalOffset = new PVector(0, 13, 0); 
 
 
@@ -135,8 +135,13 @@ void drawSkeleton(int userId)
   render.rotateY(afterSmoothHeadRots[userId]);
 
 
-  render.box(boxSize * map( afterSmoothHeadPos2Ds[userId].z, 900, 1800, 1.3, 0.9));
+  render.box(boxSize * map( afterSmoothHeadPos2Ds[userId].z, 1200, 4000, 1.0, 0.5));
+ 
   render.popMatrix();
+  
+//   render.fill(255);
+//  render.textSize(20);
+//  render.text(afterSmoothHeadPos2Ds[userId].z, 640/2, 400);
 }
 
 // -----------------------------------------------------------------
