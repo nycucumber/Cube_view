@@ -50,6 +50,8 @@ void setup()
 
 void draw()
 {
+  
+  noCursor();
   // update the cam
   context.update();
   render.beginDraw();
