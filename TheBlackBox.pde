@@ -6,24 +6,27 @@ SimpleOpenNI  context;
 PVector com = new PVector();                                   
 PVector com2d = new PVector();    
 
-
 PVector[] afterSmoothHeadPos2Ds = new PVector[100];
 float[] afterSmoothHeadRots = new float[100];
 
+float posSmoothRate = 0.8;
+float rotSmoothRate = 0.3;
 
-
-float posSmoothRate = 0.7;
-float rotSmoothRate = 0.1;
+float boxSize = 130;
+PVector finalOffset = new PVector(0, 20, 0); 
 
 
 PGraphics render;
 
 //smooth
 
+boolean sketchFullScreen() {
+  return true;
+}
+
 void setup()
 {
-  //size(fullScreen);
-  fullScreen(P3D);
+  size(displayWidth, displayHeight, P3D);
   context = new SimpleOpenNI(this);
   if (context.isInit() == false)
   {
@@ -50,7 +53,7 @@ void setup()
 
 void draw()
 {
-  
+
   noCursor();
   // update the cam
   context.update();
@@ -84,11 +87,11 @@ void draw()
     }
   }
   render.endDraw();
-  
-  
+
+
   imageMode(CENTER);
-  
-  image(render,width/2, height/2, (render.width*height)/render.height, height);
+
+  image(render, width/2, height/2, (render.width*height)/render.height, height);
 }
 
 // draw the skeleton with the selected joints
@@ -105,26 +108,34 @@ void drawSkeleton(int userId)
 
 
   context.getJointPositionSkeleton(userId, 
-    SimpleOpenNI.SKEL_LEFT_SHOULDER, leftShouldPos);
+  SimpleOpenNI.SKEL_LEFT_SHOULDER, leftShouldPos);
   context.getJointPositionSkeleton(userId, 
-    SimpleOpenNI.SKEL_RIGHT_SHOULDER, rightShouldPos);
+  SimpleOpenNI.SKEL_RIGHT_SHOULDER, rightShouldPos);
 
 
   context.convertRealWorldToProjective(headPos, headPos2D);
 
   afterSmoothHeadPos2Ds[userId] = PVector.add(afterSmoothHeadPos2Ds[userId], 
-    PVector.mult(PVector.sub(headPos2D, afterSmoothHeadPos2Ds[userId]), posSmoothRate));
+  PVector.mult(PVector.sub(headPos2D, afterSmoothHeadPos2Ds[userId]), posSmoothRate));
 
   render.pushMatrix();
   render.stroke(255, 20);
-  render.fill(0, 230);
-  render.translate(afterSmoothHeadPos2Ds[userId].x, afterSmoothHeadPos2Ds[userId].y + 15, 0);
-  float headRot = ((PI/2) * (leftShouldPos.z - rightShouldPos.z))/200;
+  render.fill(0, 240);
+
+  render.translate(afterSmoothHeadPos2Ds[userId].x  + finalOffset.x, 
+  afterSmoothHeadPos2Ds[userId].y + finalOffset.y, 
+  0 + finalOffset.z);
+
+
+  float headRot =  -((PI/2) * (leftShouldPos.z - rightShouldPos.z))/250;
+
+
+
   afterSmoothHeadRots[userId] += (headRot - afterSmoothHeadRots[userId]) * rotSmoothRate;
   render.rotateY(afterSmoothHeadRots[userId]);
 
 
-  render.box(130 * map( afterSmoothHeadPos2Ds[userId].z, 900, 1800, 1.5, 0.7));
+  render.box(boxSize * map( afterSmoothHeadPos2Ds[userId].z, 900, 1800, 1.3, 0.9));
   render.popMatrix();
 }
 
@@ -148,3 +159,4 @@ void onVisibleUser(SimpleOpenNI curContext, int userId)
 {
   //println("onVisibleUser - userId: " + userId);
 }
+
