@@ -9,11 +9,11 @@ PVector com2d = new PVector();
 PVector[] afterSmoothHeadPos2Ds = new PVector[100];
 float[] afterSmoothHeadRots = new float[100];
 
-float posSmoothRate = 0.8;
+float posSmoothRate = 0.6;
 float rotSmoothRate = 0.3;
 
 float boxSize = 130;
-PVector finalOffset = new PVector(0, 20, 0); 
+PVector finalOffset = new PVector(0, 13, 0); 
 
 
 PGraphics render;
