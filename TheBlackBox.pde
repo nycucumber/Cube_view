@@ -1,14 +1,14 @@
 import SimpleOpenNI.*;
 
 SimpleOpenNI  context;
-color[]       userClr = new color[] { 
-  color(255, 0, 0), 
-  color(0, 255, 0), 
-  color(0, 0, 255), 
-  color(255, 255, 0), 
-  color(255, 0, 255), 
-  color(0, 255, 255)
-};
+//color[]       userClr = new color[] { 
+//  color(255, 0, 0), 
+//  color(0, 255, 0), 
+//  color(0, 0, 255), 
+//  color(255, 255, 0), 
+//  color(255, 0, 255), 
+//  color(0, 255, 255)
+//};
 PVector com = new PVector();                                   
 PVector com2d = new PVector();                                   
 
@@ -51,7 +51,7 @@ void draw()
   {
     if (context.isTrackingSkeleton(userList[i]))
     {
-      stroke(userClr[ (userList[i] - 1) % userClr.length ] );
+      //stroke(userClr[ (userList[i] - 1) % userClr.length ] );
       drawSkeleton(userList[i]);
     }      
 
@@ -59,7 +59,7 @@ void draw()
     if (context.getCoM(userList[i], com))
     {
       context.convertRealWorldToProjective(com, com2d);
-      stroke(100, 255, 0);
+      stroke(255);
       strokeWeight(1);
       beginShape(LINES);
       vertex(com2d.x, com2d.y - 5);
@@ -68,9 +68,6 @@ void draw()
       vertex(com2d.x - 5, com2d.y);
       vertex(com2d.x + 5, com2d.y);
       endShape();
-
-      fill(0, 255, 100);
-      text(Integer.toString(userList[i]), com2d.x, com2d.y);
     }
   }
 }
@@ -85,58 +82,34 @@ void drawSkeleton(int userId)
    println(jointPos);
    */
 
-  PVector jointPos = new PVector();
-  PVector jointPos2D = new PVector();
-
-
+  PVector headPos = new PVector();
+  PVector headPos2D = new PVector();
   PVector leftShouldPos = new PVector();
   PVector rightShouldPos = new PVector();
-  PVector neckPos = new PVector();
 
-  context.getJointPositionSkeleton(userId, SimpleOpenNI.SKEL_HEAD, jointPos);
+
+  context.getJointPositionSkeleton(userId, SimpleOpenNI.SKEL_HEAD, headPos);
 
 
   context.getJointPositionSkeleton(userId, 
     SimpleOpenNI.SKEL_LEFT_SHOULDER, leftShouldPos);
   context.getJointPositionSkeleton(userId, 
     SimpleOpenNI.SKEL_RIGHT_SHOULDER, rightShouldPos);
-  context.getJointPositionSkeleton(userId, 
-    SimpleOpenNI.SKEL_NECK, neckPos);   
 
 
-  context.convertRealWorldToProjective(jointPos, jointPos2D);
+  context.convertRealWorldToProjective(headPos, headPos2D);
+
 
   pushMatrix();
-  println(jointPos2D.z);
+
   stroke(255, 40);
   fill(0, 230);
-  translate(jointPos2D.x, jointPos2D.y + 15, 0);
+  translate(headPos2D.x, headPos2D.y + 15, 0);
   rotateY(((PI/2) * (leftShouldPos.z - rightShouldPos.z))/200);
-  //ellipse(jointPos2D.x, jointPos2D.y, 100, 100);
 
-  box(130 * map(jointPos2D.z, 900, 1800, 1.5, 0.7));
+
+  box(130 * map(headPos2D.z, 900, 1800, 1.5, 0.7));
   popMatrix();
-
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_HEAD, SimpleOpenNI.SKEL_NECK);
-
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_NECK, SimpleOpenNI.SKEL_LEFT_SHOULDER);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_SHOULDER, SimpleOpenNI.SKEL_LEFT_ELBOW);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_ELBOW, SimpleOpenNI.SKEL_LEFT_HAND);
-
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_NECK, SimpleOpenNI.SKEL_RIGHT_SHOULDER);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_SHOULDER, SimpleOpenNI.SKEL_RIGHT_ELBOW);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_ELBOW, SimpleOpenNI.SKEL_RIGHT_HAND);
-
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_SHOULDER, SimpleOpenNI.SKEL_TORSO);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_SHOULDER, SimpleOpenNI.SKEL_TORSO);
-
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_TORSO, SimpleOpenNI.SKEL_LEFT_HIP);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_HIP, SimpleOpenNI.SKEL_LEFT_KNEE);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_LEFT_KNEE, SimpleOpenNI.SKEL_LEFT_FOOT);
-
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_TORSO, SimpleOpenNI.SKEL_RIGHT_HIP);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_HIP, SimpleOpenNI.SKEL_RIGHT_KNEE);
-  //  context.drawLimb(userId, SimpleOpenNI.SKEL_RIGHT_KNEE, SimpleOpenNI.SKEL_RIGHT_FOOT);
 }
 
 // -----------------------------------------------------------------
